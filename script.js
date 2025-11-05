@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- ✅ Browser Tab Title -->
+  <title>✉️ Resignation AI | by DisMonkey</title>
+
+  <!-- ✅ Favicon (emoji-based, no file needed) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✉️</text></svg>" />
+
+  <link rel="stylesheet" href="style.css" />
+  <meta name="description" content="Generate a professional resignation letter instantly. Free, offline, bilingual, and created by DisMonkey." />
+</head>
+
+<body>
+  <header class="site-header">
+    <h1>✉️ Resignation AI</h1>
+    <p class="tagline">Created by <strong>DisMonkey</strong> — Free • Offline • Bilingual (EN/ES)</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2 class="section-title">Enter Your Details</h2>
+
+      <div class="grid">
+        <label class="field">
+          <span>Your Full Name</span>
+          <input id="name" type="text" placeholder="Jordan Lee" />
+        </label>
+
+        <label class="field">
+          <span>Manager’s Name (optional)</span>
+          <input id="manager" type="text" placeholder="Ms. Patel" />
+        </label>
+
+        <label class="field">
+          <span>Job Title</span>
+          <input id="jobTitle" type="text" placeholder="Assistant Manager" />
+        </label>
+
+        <label class="field">
+          <span>Company</span>
+          <input id="company" type="text" placeholder="Target" />
+        </label>
+
+        <label class="field">
+          <span>Notice Period</span>
+          <select id="notice">
+            <option value="0">None / Already given</option>
+            <option value="7">1 Week</option>
+            <option value="14" selected>2 Weeks</option>
+            <option value="21">3 Weeks</option>
+            <option value="30">1 Month</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Calculated Last Day</span>
+          <input id="lastDay" type="date" readonly />
+        </label>
+
+        <label class="field">
+          <span>Reason for Leaving (optional)</span>
+          <input id="reason" type="text" placeholder="Relocating to another city" />
+        </label>
+
+        <label class="field">
+          <span>Tone</span>
+          <select id="tone">
+            <option value="formal">Formal</option>
+            <option value="polite" selected>Polite</option>
+            <option value="honest">Honest</option>
+            <option value="simple">Simple</option>
+            <option value="grateful">Grateful</option>
+            <option value="light">Light (Friendly)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Language</span>
+          <select id="language">
+            <option value="en" selected>English</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
+
+        <label class="field field-full">
+          <span>Extra Message (optional)</span>
+          <textarea id="extra" rows="3" placeholder="I’m happy to help train my replacement."></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="generateBtn">Generate Letter</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Your Letter</h2>
+      <textarea id="output" class="output" rows="14" readonly placeholder="Your letter will appear here..."></textarea>
+      <div class="actions">
+        <button id="copyBtn">Copy</button>
+        <button id="downloadBtn" class="secondary">Download (.txt)</button>
+        <button id="emailBtn" class="secondary">Email</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating tip button -->
+  <a class="tip-button" href="https://ko-fi.com/" target="_blank" title="Optional Tip ♥">Tip ♥</a>
+
+  <!-- Floating creator watermark -->
+  <div class="watermark">© DisMonkey 2025</div>
+
+  <footer class="site-footer">
+    <p>
+      Made free for everyone • Host on GitHub Pages<br>
+      <span class="credit">Created by
+        <a href="https://github.com/DisMonkey" target="_blank">DisMonkey</a>
+      </span>
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
