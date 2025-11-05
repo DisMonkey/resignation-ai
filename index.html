@@ -1,266 +1,320 @@
-/* Resignation AI — Free, Offline, Mobile + Desktop
- * Fixes:
- * - Wrap all setup in DOMContentLoaded so elements exist before we bind.
- * - Safe listeners with null checks.
- * - Clean tone/language templates.
- */
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>✉️ Resignation AI | by DisMonkey</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✉️</text></svg>" />
+  <meta name="description" content="Generate a professional resignation letter instantly. Free, offline, bilingual, and created by DisMonkey." />
 
-(function () {
-  // Helpers
-  const el = (id) => document.getElementById(id);
-  const on = (node, evt, fn) => node && node.addEventListener(evt, fn);
+  <style>
+    :root { --bg:#0f1115; --card:#171923; --text:#f1f5f9; --muted:#a8b3cf; --accent:#7c9cff; --accent-2:#9be4c6; --line:#232738; }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#0e1014,#0b0d12 60%,#0a0c11);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;-webkit-font-smoothing:antialiased}
+    .site-header{text-align:center;padding:32px 16px 8px}
+    .site-header h1{margin:0;font-size:clamp(22px,5vw,32px);letter-spacing:.3px}
+    .tagline{color:var(--muted);margin:8px 0 0;font-size:clamp(13px,3vw,15px)}
+    .container{max-width:900px;margin:24px auto 48px;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .section-title{margin:0 0 12px;font-size:18px;color:var(--accent)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field span{font-size:12px;color:var(--muted)}
+    .field input,.field select,.field textarea,.output{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#11131a;color:var(--text);outline:none;font-size:15px}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent-2);box-shadow:0 0 0 2px rgba(123,156,255,.15)}
+    .field-full{grid-column:1 / -1}
+    .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+    button{cursor:pointer;border:none;border-radius:12px;padding:12px 18px;background:var(--accent);color:#0b0d12;font-weight:700;font-size:15px;transition:transform .05s ease,opacity .2s ease}
+    button:hover{transform:translateY(-1px)} button:active{transform:translateY(0)}
+    button.secondary{background:#20263a;color:var(--text)}
+    .output{width:100%;resize:vertical;min-height:240px;line-height:1.4;font-size:15px;font-family:"Segoe UI",Roboto,sans-serif}
+    .site-footer{text-align:center;color:var(--muted);font-size:12px;margin:18px 0 28px;padding:0 10px}
+    .credit a{color:var(--accent-2);text-decoration:none;font-weight:600}
+    .credit a:hover{text-decoration:underline}
+    .credit{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
+    .tip-button{position:fixed;right:14px;bottom:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;font-weight:800;text-decoration:none;padding:10px 12px;border-radius:999px;box-shadow:0 8px 20px rgba(0,0,0,.35);opacity:.65;transition:opacity .2s ease,transform .1s ease;z-index:20}
+    .tip-button:hover{opacity:1;transform:translateY(-1px)}
+    .watermark{position:fixed;left:14px;bottom:14px;font-size:13px;color:var(--muted);opacity:.5;pointer-events:none;user-select:none;transition:opacity .2s ease;z-index:10}
+    .watermark:hover{opacity:.8}
+    @media (max-width:820px){.container{margin:16px auto 40px;padding:0 10px}.card{padding:16px}.grid{grid-template-columns:1fr}button{flex:1 1 100%;font-size:16px}.output{min-height:200px;font-size:16px}.tip-button,.watermark{bottom:10px;right:10px;left:auto;transform:scale(.95)}.watermark{left:10px}}
+    @media (max-width:480px){.site-header h1{font-size:24px}.card{border-radius:12px}}
+  </style>
+</head>
 
-  function fmtDateLocale(iso, langCode) {
-    if (!iso) return "";
-    try {
-      const d = new Date(iso + "T00:00:00");
-      return d.toLocaleDateString(langCode, { year: "numeric", month: "long", day: "numeric" });
-    } catch {
-      return iso;
+<body>
+  <header class="site-header">
+    <h1>✉️ Resignation AI</h1>
+    <p class="tagline">Created by <strong>DisMonkey</strong> — Free • Offline • Bilingual (EN/ES)</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2 class="section-title">Enter Your Details</h2>
+      <div class="grid">
+        <label class="field"><span>Your Full Name</span><input id="name" type="text" placeholder="Jordan Lee" autocomplete="name" /></label>
+        <label class="field"><span>Manager’s Name (optional)</span><input id="manager" type="text" placeholder="Ms. Patel" /></label>
+        <label class="field"><span>Job Title</span><input id="jobTitle" type="text" placeholder="Assistant Manager" /></label>
+        <label class="field"><span>Company</span><input id="company" type="text" placeholder="Target" /></label>
+
+        <label class="field">
+          <span>Notice Period</span>
+          <select id="notice">
+            <option value="0">None / Already given</option>
+            <option value="7">1 Week</option>
+            <option value="14" selected>2 Weeks</option>
+            <option value="21">3 Weeks</option>
+            <option value="30">1 Month</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Calculated Last Day</span>
+          <input id="lastDay" type="date" readonly />
+        </label>
+
+        <label class="field"><span>Reason for Leaving (optional)</span><input id="reason" type="text" placeholder="Relocating to another city" /></label>
+
+        <label class="field">
+          <span>Tone</span>
+          <select id="tone">
+            <option value="formal">Formal</option>
+            <option value="polite" selected>Polite</option>
+            <option value="honest">Honest</option>
+            <option value="simple">Simple</option>
+            <option value="grateful">Grateful</option>
+            <option value="light">Light (Friendly)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Language</span>
+          <select id="language">
+            <option value="en" selected>English</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
+
+        <label class="field field-full">
+          <span>Extra Message (optional)</span>
+          <textarea id="extra" rows="3" placeholder="I’m happy to help train my replacement."></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="generateBtn">Generate Letter</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Your Letter</h2>
+      <textarea id="output" class="output" rows="14" readonly placeholder="Your letter will appear here..."></textarea>
+      <div class="actions">
+        <button id="copyBtn">Copy</button>
+        <button id="downloadBtn" class="secondary">Download (.txt)</button>
+        <button id="emailBtn" class="secondary">Email</button>
+      </div>
+    </section>
+  </main>
+
+  <a class="tip-button" href="https://ko-fi.com/" target="_blank" rel="noopener" title="Optional Tip ♥">Tip ♥</a>
+  <div class="watermark">© DisMonkey 2025</div>
+
+  <footer class="site-footer">
+    <p>Made free for everyone • Host on GitHub Pages<br>
+      <span class="credit">Created by <a href="https://github.com/DisMonkey" target="_blank" rel="noopener">DisMonkey</a></span>
+    </p>
+  </footer>
+
+  <script>
+    // Version tag for debugging
+    console.log("Resignation AI build v1.3 single-file");
+
+    const $ = (id) => document.getElementById(id);
+    const on = (el, ev, fn) => el && el.addEventListener(ev, fn, { passive: true });
+
+    // locale date helper
+    function fmtDateLocale(iso, langCode) {
+      if (!iso) return "";
+      try {
+        const d = new Date(iso + "T00:00:00");
+        return d.toLocaleDateString(langCode, { year: "numeric", month: "long", day: "numeric" });
+      } catch { return iso; }
     }
-  }
+    const cap = (s) => (s && s.trim() ? s.trim().charAt(0).toUpperCase() + s.trim().slice(1) : "");
 
-  function capFirst(s) {
-    if (!s) return "";
-    const t = s.trim();
-    return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
-  }
-
-  // Tone templates (EN + ES)
-  const TONES = {
-    en: {
-      formal: {
-        greet: (m) => (m ? `Dear ${m},` : `To whom it may concern,`),
-        open: (j, c, d) => `Please accept this letter as formal notice of my resignation from my position as ${j} at ${c}${d ? `, effective ${d}` : ""}.`,
-        reason: (r) => (r ? `After careful consideration, I have decided to step down due to ${r}.` : ""),
-        thanks: (c) => `I am grateful for the opportunities and experience I have gained at ${c}.`,
-        transition: `I will do everything I can to ensure a smooth transition before my departure.`,
-        close: `Sincerely,`,
+    const TONES = {
+      en: {
+        formal: { greet: m=>m?`Dear ${m},`:`To whom it may concern,`,
+          open:(j,c,d)=>`Please accept this letter as formal notice of my resignation from my position as ${j} at ${c}${d?`, effective ${d}`:""}.`,
+          reason:r=>r?`After careful consideration, I have decided to step down due to ${r}.`:"",
+          thanks:c=>`I am grateful for the opportunities and experience I have gained at ${c}.`,
+          transition:`I will do everything I can to ensure a smooth transition before my departure.`,
+          close:`Sincerely,` },
+        polite: { greet:m=>m?`Hi ${m},`:`Hello,`,
+          open:(j,c,d)=>`I’m writing to let you know I’m resigning from my role as ${j} at ${c}${d?`, effective ${d}`:""}.`,
+          reason:r=>r?`This wasn’t easy, but I’m leaving because ${r}.`:"",
+          thanks:c=>`Thank you for the chance to grow at ${c}.`,
+          transition:`I’ll help ensure a smooth hand-off.`,
+          close:`Best regards,` },
+        honest: { greet:m=>m?`Dear ${m},`:`Hello,`,
+          open:(j,c,d)=>`I’m submitting my resignation from my position as ${j} at ${c}${d?`, with my last day on ${d}`:""}.`,
+          reason:r=>r?`To be transparent, my decision is based on ${r}.`:"",
+          thanks:c=>`I appreciate the experiences and relationships I’ve built at ${c}.`,
+          transition:`I’ll document my responsibilities and support a smooth transition.`,
+          close:`Respectfully,` },
+        simple: { greet:m=>m?`Hi ${m},`:`Hi,`,
+          open:(j,c,d)=>`I’m resigning from my job as ${j} at ${c}${d?`, and my last day will be ${d}`:""}.`,
+          reason:r=>r?`I’m leaving because ${r}.`:"",
+          thanks:c=>`Thanks for everything at ${c}.`,
+          transition:`I’ll help with the handover.`,
+          close:`Thanks,` },
+        grateful: { greet:m=>m?`Dear ${m},`:`Dear Team,`,
+          open:(j,c,d)=>`Please accept this as my resignation from ${j} at ${c}${d?`, effective ${d}`:""}.`,
+          reason:r=>r?`I’ve decided to move on because ${r}.`:"",
+          thanks:c=>`I’m truly grateful for the mentorship, trust, and opportunities at ${c}.`,
+          transition:`I’ll do my best to make this an easy transition for everyone.`,
+          close:`With appreciation,` },
+        light: { greet:m=>m?`Hey ${m},`:`Hey there,`,
+          open:(j,c,d)=>`I’m letting you know I’ll be resigning from my role as ${j} at ${c}${d?`, with ${d} as my last day`:""}.`,
+          reason:r=>r?`The short version: I’m moving on because ${r}.`:"",
+          thanks:c=>`I’ve learned a lot and I’m thankful for my time at ${c}.`,
+          transition:`I’ll leave things tidy and share notes to keep everything rolling.`,
+          close:`All the best,` },
       },
-      polite: {
-        greet: (m) => (m ? `Hi ${m},` : `Hello,`),
-        open: (j, c, d) => `I’m writing to let you know I’m resigning from my role as ${j} at ${c}${d ? `, effective ${d}` : ""}.`,
-        reason: (r) => (r ? `This wasn’t easy, but I’m leaving because ${r}.` : ""),
-        thanks: (c) => `Thank you for the chance to grow at ${c}.`,
-        transition: `I’ll help ensure a smooth hand-off.`,
-        close: `Best regards,`,
-      },
-      honest: {
-        greet: (m) => (m ? `Dear ${m},` : `Hello,`),
-        open: (j, c, d) => `I’m submitting my resignation from my position as ${j} at ${c}${d ? `, with my last day on ${d}` : ""}.`,
-        reason: (r) => (r ? `To be transparent, my decision is based on ${r}.` : ""),
-        thanks: (c) => `I appreciate the experiences and relationships I’ve built at ${c}.`,
-        transition: `I’ll document my responsibilities and support a smooth transition.`,
-        close: `Respectfully,`,
-      },
-      simple: {
-        greet: (m) => (m ? `Hi ${m},` : `Hi,`),
-        open: (j, c, d) => `I’m resigning from my job as ${j} at ${c}${d ? `, and my last day will be ${d}` : ""}.`,
-        reason: (r) => (r ? `I’m leaving because ${r}.` : ""),
-        thanks: (c) => `Thanks for everything at ${c}.`,
-        transition: `I’ll help with the handover.`,
-        close: `Thanks,`,
-      },
-      grateful: {
-        greet: (m) => (m ? `Dear ${m},` : `Dear Team,`),
-        open: (j, c, d) => `Please accept this as my resignation from ${j} at ${c}${d ? `, effective ${d}` : ""}.`,
-        reason: (r) => (r ? `I’ve decided to move on because ${r}.` : ""),
-        thanks: (c) => `I’m truly grateful for the mentorship, trust, and opportunities at ${c}.`,
-        transition: `I’ll do my best to make this an easy transition for everyone.`,
-        close: `With appreciation,`,
-      },
-      light: {
-        greet: (m) => (m ? `Hey ${m},` : `Hey there,`),
-        open: (j, c, d) => `I’m letting you know I’ll be resigning from my role as ${j} at ${c}${d ? `, with ${d} as my last day` : ""}.`,
-        reason: (r) => (r ? `The short version: I’m moving on because ${r}.` : ""),
-        thanks: (c) => `I’ve learned a lot and I’m thankful for my time at ${c}.`,
-        transition: `I’ll leave things tidy and share notes to keep everything rolling.`,
-        close: `All the best,`,
-      },
-    },
-    es: {
-      formal: {
-        greet: (m) => (m ? `Estimado/a ${m},` : `A quien corresponda:`),
-        open: (j, c, d) => `Por medio de la presente, presento mi renuncia al puesto de ${j} en ${c}${d ? `, con fecha efectiva ${d}` : ""}.`,
-        reason: (r) => (r ? `Tras una cuidadosa consideración, he decidido retirarme debido a ${r}.` : ""),
-        thanks: (c) => `Agradezco las oportunidades y la experiencia adquiridas en ${c}.`,
-        transition: `Haré todo lo posible para garantizar una transición ordenada antes de mi salida.`,
-        close: `Atentamente,`,
-      },
-      polite: {
-        greet: (m) => (m ? `Hola ${m},` : `Hola,`),
-        open: (j, c, d) => `Le escribo para informarle que presento mi renuncia al puesto de ${j} en ${c}${d ? `, con fecha efectiva ${d}` : ""}.`,
-        reason: (r) => (r ? `No fue una decisión fácil, pero me voy porque ${r}.` : ""),
-        thanks: (c) => `Agradezco la oportunidad de haber crecido en ${c}.`,
-        transition: `Apoyaré para que el traspaso sea lo más sencillo posible.`,
-        close: `Saludos cordiales,`,
-      },
-      honest: {
-        greet: (m) => (m ? `Estimado/a ${m},` : `Hola,`),
-        open: (j, c, d) => `Presento mi renuncia al puesto de ${j} en ${c}${d ? `, siendo mi último día ${d}` : ""}.`,
-        reason: (r) => (r ? `Con transparencia, esta decisión se basa en ${r}.` : ""),
-        thanks: (c) => `Valoro las experiencias y relaciones construidas en ${c}.`,
-        transition: `Dejaré documentadas mis tareas y apoyaré la transición.`,
-        close: `Respetuosamente,`,
-      },
-      simple: {
-        greet: (m) => (m ? `Hola ${m},` : `Hola,`),
-        open: (j, c, d) => `Renuncio a mi trabajo como ${j} en ${c}${d ? `; mi último día será ${d}` : ""}.`,
-        reason: (r) => (r ? `Me voy porque ${r}.` : ""),
-        thanks: (c) => `Gracias por todo en ${c}.`,
-        transition: `Ayudaré con el traspaso.`,
-        close: `Gracias,`,
-      },
-      grateful: {
-        greet: (m) => (m ? `Estimado/a ${m},` : `Estimado equipo,`),
-        open: (j, c, d) => `Por favor, acepte esta carta como mi renuncia a ${j} en ${c}${d ? `, efectiva ${d}` : ""}.`,
-        reason: (r) => (r ? `He decidido continuar con nuevos rumbos porque ${r}.` : ""),
-        thanks: (c) => `Estoy muy agradecido/a por la confianza y el aprendizaje en ${c}.`,
-        transition: `Haré todo lo posible para que la transición sea fácil para todos.`,
-        close: `Con aprecio,`,
-      },
-      light: {
-        greet: (m) => (m ? `Hola ${m},` : `Hola,`),
-        open: (j, c, d) => `Quería comentarte que renuncio a mi puesto de ${j} en ${c}${d ? `; mi último día será ${d}` : ""}.`,
-        reason: (r) => (r ? `En pocas palabras: me voy porque ${r}.` : ""),
-        thanks: (c) => `Aprendí mucho y agradezco mi tiempo en ${c}.`,
-        transition: `Dejaré todo en orden y notas para que todo siga funcionando.`,
-        close: `Un saludo,`,
-      },
-    },
-  };
-
-  function buildLetter(d) {
-    const lang = d.lang === "es" ? "es" : "en";
-    const toneKey = TONES[lang][d.tone] ? d.tone : "polite";
-    const t = TONES[lang][toneKey];
-
-    const lastTxt = d.last ? fmtDateLocale(d.last, lang === "es" ? "es-ES" : undefined) : "";
-    const parts = [
-      t.greet(d.manager),
-      t.open(d.job, d.company, lastTxt),
-      d.reason ? t.reason(capFirst(d.reason)) : "",
-      t.thanks(d.company),
-      d.extra ? capFirst(d.extra) : t.transition,
-      `${t.close}\n${d.name || ""}`,
-    ].filter(Boolean);
-
-    return parts.join("\n\n").trim();
-  }
-
-  function getFormData() {
-    return {
-      name: el("name")?.value.trim() || "",
-      manager: el("manager")?.value.trim() || "",
-      job: el("jobTitle")?.value.trim() || "Employee",
-      company: el("company")?.value.trim() || "the company",
-      last: el("lastDay")?.value || "",
-      reason: el("reason")?.value.trim() || "",
-      extra: el("extra")?.value.trim() || "",
-      tone: el("tone")?.value || "polite",
-      lang: el("language")?.value || "en",
-    };
-  }
-
-  function toast(msg) {
-    const t = document.createElement("div");
-    t.textContent = msg;
-    Object.assign(t.style, {
-      position: "fixed",
-      left: "50%",
-      bottom: "22px",
-      transform: "translateX(-50%)",
-      background: "#1f2335",
-      color: "#e6edf3",
-      padding: "10px 14px",
-      borderRadius: "10px",
-      border: "1px solid #2b3150",
-      boxShadow: "0 8px 20px rgba(0,0,0,.35)",
-      zIndex: 9999,
-      fontSize: "14px",
-      opacity: "0",
-      transition: "opacity .2s ease",
-    });
-    document.body.appendChild(t);
-    requestAnimationFrame(() => (t.style.opacity = "1"));
-    setTimeout(() => {
-      t.style.opacity = "0";
-      setTimeout(() => t.remove(), 220);
-    }, 1700);
-  }
-
-  // Bind once DOM is ready
-  document.addEventListener("DOMContentLoaded", () => {
-    const noticeSel = el("notice");
-    on(noticeSel, "change", () => {
-      const days = parseInt(noticeSel.value, 10) || 0;
-      const out = el("lastDay");
-      if (!out) return;
-      if (days <= 0) {
-        out.value = "";
-        return;
+      es: {
+        formal: { greet:m=>m?`Estimado/a ${m},`:`A quien corresponda:`,
+          open:(j,c,d)=>`Por medio de la presente, presento mi renuncia al puesto de ${j} en ${c}${d?`, con fecha efectiva ${d}`:""}.`,
+          reason:r=>r?`Tras una cuidadosa consideración, he decidido retirarme debido a ${r}.`:"",
+          thanks:c=>`Agradezco las oportunidades y la experiencia adquiridas en ${c}.`,
+          transition:`Haré todo lo posible para garantizar una transición ordenada antes de mi salida.`,
+          close:`Atentamente,` },
+        polite: { greet:m=>m?`Hola ${m},`:`Hola,`,
+          open:(j,c,d)=>`Le escribo para informarle que presento mi renuncia al puesto de ${j} en ${c}${d?`, con fecha efectiva ${d}`:""}.`,
+          reason:r=>r?`No fue una decisión fácil, pero me voy porque ${r}.`:"",
+          thanks:c=>`Agradezco la oportunidad de haber crecido en ${c}.`,
+          transition:`Apoyaré para que el traspaso sea lo más sencillo posible.`,
+          close:`Saludos cordiales,` },
+        honest: { greet:m=>m?`Estimado/a ${m},`:`Hola,`,
+          open:(j,c,d)=>`Presento mi renuncia al puesto de ${j} en ${c}${d?`, siendo mi último día ${d}`:""}.`,
+          reason:r=>r?`Con transparencia, esta decisión se basa en ${r}.`:"",
+          thanks:c=>`Valoro las experiencias y relaciones construidas en ${c}.`,
+          transition:`Dejaré documentadas mis tareas y apoyaré la transición.`,
+          close:`Respetuosamente,` },
+        simple: { greet:m=>m?`Hola ${m},`:`Hola,`,
+          open:(j,c,d)=>`Renuncio a mi trabajo como ${j} en ${c}${d?`; mi último día será ${d}`:""}.`,
+          reason:r=>r?`Me voy porque ${r}.`:"",
+          thanks:c=>`Gracias por todo en ${c}.`,
+          transition:`Ayudaré con el traspaso.`,
+          close:`Gracias,` },
+        grateful: { greet:m=>m?`Estimado/a ${m},`:`Estimado equipo,`,
+          open:(j,c,d)=>`Por favor, acepte esta carta como mi renuncia a ${j} en ${c}${d?`, efectiva ${d}`:""}.`,
+          reason:r=>r?`He decidido continuar con nuevos rumbos porque ${r}.`:"",
+          thanks:c=>`Estoy muy agradecido/a por la confianza y el aprendizaje en ${c}.`,
+          transition:`Haré todo lo posible para que la transición sea fácil para todos.`,
+          close:`Con aprecio,` },
+        light: { greet:m=>m?`Hola ${m},`:`Hola,`,
+          open:(j,c,d)=>`Quería comentarte que renuncio a mi puesto de ${j} en ${c}${d?`; mi último día será ${d}`:""}.`,
+          reason:r=>r?`En pocas palabras: me voy porque ${r}.`:"",
+          thanks:c=>`Aprendí mucho y agradezco mi tiempo en ${c}.`,
+          transition:`Dejaré todo en orden y notas para que todo siga funcionando.`,
+          close:`Un saludo,` },
       }
+    };
+
+    function getData() {
+      return {
+        name: $("name")?.value.trim() || "",
+        manager: $("manager")?.value.trim() || "",
+        job: $("jobTitle")?.value.trim() || "Employee",
+        company: $("company")?.value.trim() || "the company",
+        lastISO: $("lastDay")?.value || "",
+        reason: $("reason")?.value.trim() || "",
+        extra: $("extra")?.value.trim() || "",
+        tone: $("tone")?.value || "polite",
+        lang: $("language")?.value || "en",
+      };
+    }
+
+    function buildLetter(d) {
+      const lang = d.lang === "es" ? "es" : "en";
+      const tone = TONES[lang][d.tone] ? d.tone : "polite";
+      const t = TONES[lang][tone];
+      const lastTxt = d.lastISO ? fmtDateLocale(d.lastISO, lang === "es" ? "es-ES" : undefined) : "";
+
+      return [
+        t.greet(d.manager),
+        t.open(d.job, d.company, lastTxt),
+        d.reason ? t.reason(cap(d.reason)) : "",
+        t.thanks(d.company),
+        d.extra ? cap(d.extra) : t.transition,
+        `${t.close}\n${d.name || ""}`
+      ].filter(Boolean).join("\n\n");
+    }
+
+    function setNoticeDate(days) {
+      const out = $("lastDay");
+      if (!out) return;
+      if (!days || days <= 0) { out.value = ""; return; }
       const d = new Date();
       d.setDate(d.getDate() + days);
-      out.value = d.toISOString().split("T")[0];
-    });
+      // YYYY-MM-DD
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      out.value = `${yyyy}-${mm}-${dd}`;
+    }
 
-    on(el("generateBtn"), "click", () => {
-      const d = getFormData();
-      if (!d.name) return alert(d.lang === "es" ? "Ingrese su nombre completo." : "Please enter your full name.");
-      if (!d.job) return alert(d.lang === "es" ? "Ingrese su puesto." : "Please enter your job title.");
-      if (!d.company) return alert(d.lang === "es" ? "Ingrese su empresa." : "Please enter your company.");
+    // Bind after DOM is ready
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize last day based on default notice (14)
+      const notice = $("notice");
+      if (notice) setNoticeDate(parseInt(notice.value || "14", 10));
 
-      const letter = buildLetter(d);
-      const out = el("output");
-      if (out) out.value = letter;
-      toast(d.lang === "es" ? "Carta generada." : "Letter generated.");
-    });
+      on(notice, "change", () => setNoticeDate(parseInt(notice.value || "0", 10)));
+      on(notice, "input", () => setNoticeDate(parseInt(notice.value || "0", 10))); // some mobile UIs fire input
 
-    on(el("copyBtn"), "click", async () => {
-      const txt = el("output")?.value || "";
-      if (!txt.trim()) return;
-      try {
-        await navigator.clipboard.writeText(txt);
-        toast("Copied to clipboard!");
-      } catch {
-        toast("Copy failed—select and copy manually.");
-      }
-    });
-
-    on(el("downloadBtn"), "click", () => {
-      const txt = el("output")?.value || "";
-      if (!txt.trim()) return;
-      const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      const safeName = (el("name")?.value.trim() || "resignation").replace(/\s+/g, "_");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${safeName}_letter.txt`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(a.href);
-    });
-
-    on(el("emailBtn"), "click", () => {
-      const txt = el("output")?.value || "";
-      if (!txt.trim()) return;
-      const subject = encodeURIComponent("Resignation Letter");
-      const body = encodeURIComponent(txt);
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    });
-
-    on(el("clearBtn"), "click", () => {
-      ["name", "manager", "jobTitle", "company", "lastDay", "reason", "extra"].forEach((id) => {
-        const n = el(id);
-        if (!n) return;
-        n.value = "";
+      on($("generateBtn"), "click", () => {
+        const d = getData();
+        if (!d.name) return alert(d.lang==="es"?"Ingrese su nombre completo.":"Please enter your full name.");
+        if (!d.job) return alert(d.lang==="es"?"Ingrese su puesto.":"Please enter your job title.");
+        if (!d.company) return alert(d.lang==="es"?"Ingrese su empresa.":"Please enter your company.");
+        const letter = buildLetter(d);
+        const out = $("output");
+        if (out) out.value = letter;
       });
-      if (el("tone")) el("tone").value = "polite";
-      if (el("language")) el("language").value = "en";
-      if (el("notice")) el("notice").value = "14";
-      el("output") && (el("output").value = "");
-      toast("Cleared.");
+
+      on($("copyBtn"), "click", async () => {
+        const txt = $("output")?.value || "";
+        if (!txt.trim()) return;
+        try { await navigator.clipboard.writeText(txt); alert("Copied!"); }
+        catch { alert("Copy failed — select and copy manually."); }
+      });
+
+      on($("downloadBtn"), "click", () => {
+        const txt = $("output")?.value || "";
+        if (!txt.trim()) return;
+        const safe = ($("name")?.value.trim() || "resignation").replace(/\s+/g,"_");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([txt], {type:"text/plain;charset=utf-8"}));
+        a.download = `${safe}_letter.txt`;
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+
+      on($("emailBtn"), "click", () => {
+        const txt = $("output")?.value || "";
+        if (!txt.trim()) return;
+        location.href = `mailto:?subject=${encodeURIComponent("Resignation Letter")}&body=${encodeURIComponent(txt)}`;
+      });
+
+      on($("clearBtn"), "click", () => {
+        ["name","manager","jobTitle","company","lastDay","reason","extra"].forEach(id=>{ const n=$(id); if(n) n.value=""; });
+        if ($("tone")) $("tone").value = "polite";
+        if ($("language")) $("language").value = "en";
+        if ($("notice")) $("notice").value = "14", setNoticeDate(14);
+        if ($("output")) $("output").value = "";
+      });
     });
-  });
-})();
+  </script>
+</body>
+</html>
